@@ -41,8 +41,12 @@ jobs:
           disable-animations: true
           emulator-boot-timeout: 900
           script: |
-            APK=$(ls app/build/outputs/apk/appRelease/debug/*.apk | head -1)
-            echo "APK: $APK"
+            echo "PWD=$(pwd)"
+            echo "WORKSPACE=$GITHUB_WORKSPACE"
+            echo "--- locate apk ---"
+            find "$GITHUB_WORKSPACE/app/build" -name "*.apk" || true
+            APK=$(find "$GITHUB_WORKSPACE/app/build" -name "*.apk" | head -1)
+            echo "APK=[$APK]"
 
             echo "===== build info ====="
             adb shell getprop ro.build.version.release || true
@@ -87,6 +91,19 @@ jobs:
 
             echo "===== app uid (run-as) ====="
             adb shell run-as com.xjs.ehviewer.debug1 id || true
+            adb shell pm path com.xjs.ehviewer.debug1 || true
+
+            echo "===== media process identity ====="
+            adb shell "ps -A -o USER,PID,NAME | grep -iE 'media|fuse' | head -10" || true
+
+            echo "===== app vs shell: /data/media metadata ====="
+            adb shell ls -ldZ /data/media || true
+            adb shell run-as com.xjs.ehviewer.debug1 ls -ldZ /data/media || true
+
+            echo "===== app: fuse view label ====="
+            adb shell run-as com.xjs.ehviewer.debug1 ls -ldZ /storage/emulated/0 || true
+            adb shell run-as com.xjs.ehviewer.debug1 touch /sdcard/_app_lbl || true
+            adb shell ls -Z /sdcard/_app_lbl || true
 
             echo "===== app: raw access attempts (no appop yet) ====="
             adb shell run-as com.xjs.ehviewer.debug1 ls -ld /data/media || true
