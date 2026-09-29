@@ -62,7 +62,7 @@ public class HostsTest {
 
   @Test
   public void testGet() {
-    Hosts hosts = new Hosts(RuntimeEnvironment.application, "hosts.db");
+    Hosts hosts = new Hosts(RuntimeEnvironment.getApplication(), "hosts.db");
 
     assertEquals(null, hosts.get("ni.hao"));
     hosts.put("ni.hao", "127.0.0.1");
@@ -73,7 +73,7 @@ public class HostsTest {
 
   @Test
   public void testPut() {
-    Hosts hosts = new Hosts(RuntimeEnvironment.application, "hosts.db");
+    Hosts hosts = new Hosts(RuntimeEnvironment.getApplication(), "hosts.db");
 
     assertEquals(null, hosts.get("ni.hao"));
     assertEquals(true, hosts.put("ni.hao", "127.0.0.1"));
@@ -95,7 +95,7 @@ public class HostsTest {
 
   @Test
   public void testDelete() {
-    Hosts hosts = new Hosts(RuntimeEnvironment.application, "hosts.db");
+    Hosts hosts = new Hosts(RuntimeEnvironment.getApplication(), "hosts.db");
 
     hosts.put("ni.hao", "127.0.0.1");
     assertEquals("ni.hao/127.0.0.1", hosts.get("ni.hao").toString());
@@ -108,7 +108,7 @@ public class HostsTest {
 
   @Test
   public void testGetAll() {
-    Hosts hosts = new Hosts(RuntimeEnvironment.application, "hosts.db");
+    Hosts hosts = new Hosts(RuntimeEnvironment.getApplication(), "hosts.db");
 
     List<Pair<String, String>> all = hosts.getAll();
     assertEquals(0, all.size());

@@ -65,7 +65,7 @@ public class CookieRepositoryTest {
 
   @Test
   public void testPersistent() {
-    Context app = RuntimeEnvironment.application;
+    Context app = RuntimeEnvironment.getApplication();
 
     HttpUrl urlEh = HttpUrl.parse("http://www.ehviewer.com/");
     Cookie cookieEh1 = new Cookie.Builder()
@@ -119,7 +119,7 @@ public class CookieRepositoryTest {
 
   @Test
   public void testUpdate() {
-    Context app = RuntimeEnvironment.application;
+    Context app = RuntimeEnvironment.getApplication();
 
     HttpUrl urlEh = HttpUrl.parse("http://www.ehviewer.com/");
     Cookie cookieEh1 = new Cookie.Builder()
@@ -154,7 +154,7 @@ public class CookieRepositoryTest {
 
   @Test
   public void testRemoveByExpired() {
-    Context app = RuntimeEnvironment.application;
+    Context app = RuntimeEnvironment.getApplication();
 
     HttpUrl urlEh = HttpUrl.parse("http://www.ehviewer.com/");
     Cookie cookieEh1 = new Cookie.Builder()
@@ -188,7 +188,7 @@ public class CookieRepositoryTest {
 
   @Test
   public void testRemoveByNonPersistent() {
-    Context app = RuntimeEnvironment.application;
+    Context app = RuntimeEnvironment.getApplication();
 
     HttpUrl urlEh = HttpUrl.parse("http://www.ehviewer.com/");
     Cookie cookieEh1 = new Cookie.Builder()
@@ -222,7 +222,7 @@ public class CookieRepositoryTest {
 
   @Test
   public void testGet() throws InterruptedException {
-    Context app = RuntimeEnvironment.application;
+    Context app = RuntimeEnvironment.getApplication();
 
     HttpUrl urlEh1 = HttpUrl.parse("http://www.ehviewer.com/");
     HttpUrl urlEh2 = HttpUrl.parse("http://ehviewer.com/");
@@ -266,7 +266,7 @@ public class CookieRepositoryTest {
 
   @Test
   public void testClear() {
-    Context app = RuntimeEnvironment.application;
+    Context app = RuntimeEnvironment.getApplication();
 
     HttpUrl url = HttpUrl.parse("http://www.ehviewer.com/");
     Cookie cookie = new Cookie.Builder()
@@ -295,7 +295,7 @@ public class CookieRepositoryTest {
 
   @Test
   public void testSort() {
-    Context app = RuntimeEnvironment.application;
+    Context app = RuntimeEnvironment.getApplication();
 
     HttpUrl url = HttpUrl.parse("http://www.ehviewer.com/long/long/long/");
     Cookie cookie1 = new Cookie.Builder()
