@@ -45,8 +45,7 @@ jobs:
             echo "WORKSPACE=$GITHUB_WORKSPACE"
             echo "--- locate apk ---"
             find "$GITHUB_WORKSPACE/app/build" -name "*.apk" || true
-            APK=$(find "$GITHUB_WORKSPACE/app/build" -name "*.apk" | head -1)
-            echo "APK=[$APK]"
+            echo "APK=[$(find "$GITHUB_WORKSPACE/app/build" -name "*.apk" | head -1)]"
 
             echo "===== build info ====="
             adb shell getprop ro.build.version.release || true
@@ -86,7 +85,7 @@ jobs:
             adb shell "touch /sdcard/_shell_sanity && echo SDCARD_OK && rm /sdcard/_shell_sanity" || true
 
             echo "===== install app ====="
-            adb install -r "$APK" || true
+            adb install -r "$(find "$GITHUB_WORKSPACE/app/build" -name "*.apk" | head -1)" || true
             adb shell pm list packages | grep -i "ehviewer" || true
 
             echo "===== app uid (run-as) ====="
