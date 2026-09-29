@@ -21,6 +21,11 @@ jobs:
           distribution: 'temurin'
           java-version: 21
 
+      - name: Unit tests
+        run: |
+          chmod +x ./gradlew
+          ./gradlew app:testDebugUnitTest
+
       - name: Build
         run: |
           chmod +x ./gradlew
