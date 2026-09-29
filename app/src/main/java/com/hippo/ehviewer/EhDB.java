@@ -638,6 +638,10 @@ public class EhDB {
     }
 
     public static synchronized boolean containLocalFavorites(long gid) {
+        if (sDaoSession == null) {
+            // No session yet (e.g. unit tests or calls before initialize()).
+            return false;
+        }
         LocalFavoritesDao dao = sDaoSession.getLocalFavoritesDao();
         return null != dao.load(gid);
     }
