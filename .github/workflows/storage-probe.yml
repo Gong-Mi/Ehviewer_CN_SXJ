@@ -1,0 +1,115 @@
+name: Storage access probe
+
+on:
+  push:
+    branches: [ probe/storage-access-emulator ]
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Build debug APK
+        run: |
+          chmod +x ./gradlew
+          ./gradlew app:assembleDebug
+
+      - name: Enable KVM group perms
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Probe storage access on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          ram-size: 2048
+          disable-animations: true
+          emulator-boot-timeout: 900
+          script: |
+            APK=$(ls app/build/outputs/apk/appRelease/debug/*.apk | head -1)
+            echo "APK: $APK"
+
+            echo "===== build info ====="
+            adb shell getprop ro.build.version.release || true
+            adb shell getprop ro.build.version.sdk || true
+            adb shell getprop ro.build.type || true
+            adb shell getprop ro.debuggable || true
+            adb shell getenforce || true
+
+            echo "===== shell uid ====="
+            adb shell id || true
+
+            echo "===== mounts (emulated / pass_through) ====="
+            adb shell "mount | grep -E 'emulated|pass_through'" || true
+            adb shell "cat /proc/self/mountinfo | grep -E 'emulated|pass_through'" || true
+
+            echo "===== dir metadata (shell) ====="
+            adb shell ls -ldZ /data || true
+            adb shell ls -ldZ /data/media || true
+            adb shell ls -ldZ /data/media/0 || true
+            adb shell ls -ldZ /mnt/user || true
+            adb shell ls -ldZ /mnt/user/0 || true
+            adb shell ls -ldZ /mnt/user/0/emulated || true
+            adb shell ls -ldZ /mnt/pass_through || true
+            adb shell ls -ldZ /mnt/pass_through/0 || true
+            adb shell ls -ldZ /mnt/pass_through/0/emulated || true
+            adb shell ls -ldZ /storage /storage/emulated /storage/emulated/0 || true
+            adb shell ls -ldZ /sdcard || true
+
+            echo "===== shell: raw access attempts ====="
+            adb shell "ls /data/media | head -5" || true
+            adb shell "ls /data/media/0 | head -5" || true
+            adb shell "touch /data/media/0/shell_probe" || true
+            adb shell "ls /mnt/user/0/emulated | head -5" || true
+            adb shell "ls /mnt/pass_through/0/emulated | head -5" || true
+
+            echo "===== shell: sdcard sanity ====="
+            adb shell "touch /sdcard/_shell_sanity && echo SDCARD_OK && rm /sdcard/_shell_sanity" || true
+
+            echo "===== install app ====="
+            adb install -r "$APK" || true
+            adb shell pm list packages | grep -i "ehviewer" || true
+
+            echo "===== app uid (run-as) ====="
+            adb shell run-as com.xjs.ehviewer.debug1 id || true
+
+            echo "===== app: raw access attempts (no appop yet) ====="
+            adb shell run-as com.xjs.ehviewer.debug1 ls -ld /data/media || true
+            adb shell run-as com.xjs.ehviewer.debug1 ls /data/media || true
+            adb shell run-as com.xjs.ehviewer.debug1 ls /data/media/0 || true
+            adb shell run-as com.xjs.ehviewer.debug1 touch /data/media/0/app_probe || true
+            adb shell run-as com.xjs.ehviewer.debug1 ls -ld /mnt/user/0/emulated || true
+            adb shell run-as com.xjs.ehviewer.debug1 ls -ld /mnt/pass_through/0/emulated || true
+
+            echo "===== app: sdcard before appop ====="
+            adb shell run-as com.xjs.ehviewer.debug1 touch /sdcard/_app_sanity_before || true
+            adb shell run-as com.xjs.ehviewer.debug1 ls -ld /sdcard || true
+
+            echo "===== grant MANAGE_EXTERNAL_STORAGE ====="
+            adb shell appops set com.xjs.ehviewer.debug1 MANAGE_EXTERNAL_STORAGE allow || true
+            adb shell cmd appops get com.xjs.ehviewer.debug1 MANAGE_EXTERNAL_STORAGE || true
+
+            echo "===== app: sdcard after appop ====="
+            adb shell run-as com.xjs.ehviewer.debug1 touch /sdcard/_app_sanity_after || true
+            adb shell run-as com.xjs.ehviewer.debug1 ls /sdcard | head -5 || true
+
+            echo "===== app: raw after appop ====="
+            adb shell run-as com.xjs.ehviewer.debug1 ls -ld /data/media/0 || true
+            adb shell run-as com.xjs.ehviewer.debug1 touch /data/media/0/app_probe2 || true
+
+            echo "===== done ====="
